@@ -10,6 +10,46 @@ useEffect(() => {
   });
 }, []);
 
+const handleSum = async () => {
+  const result = Number(num1) + Number(num2);
+  setResult(result);
+
+  if (user) {
+    const { error } = await supabase.from('operations').insert([
+      {
+        user_id: user.id,
+        num1: Number(num1),
+        num2: Number(num2),
+        result,
+      },
+    ]);
+    if (error) console.error('Errore nel salvataggio:', error.message);
+  }
+};
+
+const [history, setHistory] = useState([]);
+
+useEffect(() => {
+  if (user) {
+    supabase
+      .from('operations')
+      .select('*')
+      .order('inserted_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error(error.message);
+        else setHistory(data);
+      });
+  }
+}, [user]);
+
+
+{history.map((op) => (
+  <div key={op.id}>
+    {op.num1} + {op.num2} = {op.result}
+  </div>
+))}
+
+
 export default function Home() {
   const [num1, setNum1] = useState('');
   const [num2, setNum2] = useState('');
