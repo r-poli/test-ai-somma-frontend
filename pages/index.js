@@ -1,124 +1,103 @@
-import React, { useState } from 'react';
-
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-
-useEffect(() => {
-  supabase.auth.getUser().then(({ data: { user } }) => {
-    console.log('Utente loggato:', user);
-    setUser(user);
-  });
-}, []);
-
-const handleSum = async () => {
-  const result = Number(num1) + Number(num2);
-  setResult(result);
-
-  if (user) {
-    const { error } = await supabase.from('operations').insert([
-      {
-        user_id: user.id,
-        num1: Number(num1),
-        num2: Number(num2),
-        result,
-      },
-    ]);
-    if (error) console.error('Errore nel salvataggio:', error.message);
-  }
-};
-
-const [history, setHistory] = useState([]);
-
-useEffect(() => {
-  if (user) {
-    supabase
-      .from('operations')
-      .select('*')
-      .order('inserted_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error(error.message);
-        else setHistory(data);
-      });
-  }
-}, [user]);
-
-
-{history.map((op) => (
-  <div key={op.id}>
-    {op.num1} + {op.num2} = {op.result}
-  </div>
-))}
-
 
 export default function Home() {
   const [num1, setNum1] = useState('');
   const [num2, setNum2] = useState('');
   const [result, setResult] = useState(null);
+  const [user, setUser] = useState(null);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      if (user) loadHistory(user.id);
+    });
+  }, []);
 
   const handleSum = async () => {
-    console.log("Invio richiesta a:", process.env.NEXT_PUBLIC_BACKEND_URL);
+    const sum = Number(num1) + Number(num2);
+    setResult(sum);
 
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/sum`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    if (user) {
+      const { error } = await supabase.from('operations').insert([
+        {
+          user_id: user.id,
           num1: Number(num1),
           num2: Number(num2),
-        }),
-      });
-
-      console.log("Response status:", res.status);
-
-      const data = await res.json();
-      console.log("Risultato ricevuto:", data);
-      setResult(data.result);
-    } catch (err) {
-      console.error("Errore:", err);
+          result: sum,
+        },
+      ]);
+      if (error) console.error(error);
+      else loadHistory(user.id);
     }
+  };
+
+  const loadHistory = async (userId) => {
+    const { data, error } = await supabase
+      .from('operations')
+      .select('*')
+      .eq('user_id', userId)
+      .order('inserted_at', { ascending: false })
+      .limit(10);
+
+    if (!error) setHistory(data);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setHistory([]);
   };
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>Somma di due numeri</h1>
+      <h1>Somma di due numeri</h1>
 
-      <input
-        type="number"
-        placeholder="Numero 1"
-        value={num1}
-        onChange={(e) => setNum1(e.target.value)}
-        style={{ padding: '0.5rem', fontSize: '1rem', marginRight: '1rem' }}
-      />
-
-      <input
-        type="number"
-        placeholder="Numero 2"
-        value={num2}
-        onChange={(e) => setNum2(e.target.value)}
-        style={{ padding: '0.5rem', fontSize: '1rem' }}
-      />
+      {user ? (
+        <>
+          <p>Benvenuto: {user.email} <button onClick={handleLogout}>Logout</button></p>
+        </>
+      ) : (
+        <>
+          <p><a href="/login">Accedi con email</a> per salvare le tue somme</p>
+        </>
+      )}
 
       <div style={{ marginTop: '1rem' }}>
-        <button
-          onClick={handleSum}
-          style={{
-            backgroundColor: '#0070f3',
-            color: '#fff',
-            padding: '0.6rem 1.2rem',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '1rem',
-          }}
-        >
-          Somma
-        </button>
+        <input
+          type="number"
+          value={num1}
+          onChange={(e) => setNum1(e.target.value)}
+          placeholder="Numero 1"
+        />
+        <input
+          type="number"
+          value={num2}
+          onChange={(e) => setNum2(e.target.value)}
+          placeholder="Numero 2"
+          style={{ marginLeft: '1rem' }}
+        />
+        <div style={{ marginTop: '1rem' }}>
+          <button onClick={handleSum}>Somma</button>
+        </div>
       </div>
 
       {result !== null && (
-        <p style={{ marginTop: '1.5rem', fontSize: '1.2rem', color: '#0070f3' }}>
-          Risultato: <strong>{result}</strong>
-        </p>
+        <p style={{ marginTop: '1rem' }}>Risultato: <strong>{result}</strong></p>
+      )}
+
+      {user && history.length > 0 && (
+        <div style={{ marginTop: '2rem' }}>
+          <h3>Le tue ultime operazioni:</h3>
+          <ul>
+            {history.map((op) => (
+              <li key={op.id}>
+                {op.num1} + {op.num2} = <strong>{op.result}</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
