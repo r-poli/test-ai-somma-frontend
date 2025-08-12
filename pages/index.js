@@ -9,6 +9,7 @@ export default function Home() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
+    // Recupera l'utente attuale
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       if (user) loadHistory(user.id);
@@ -55,13 +56,13 @@ export default function Home() {
       <h1>Somma di due numeri</h1>
 
       {user ? (
-        <>
-          <p>Benvenuto: {user.email} <button onClick={handleLogout}>Logout</button></p>
-        </>
+        <p>
+          Benvenuto: {user.email} <button onClick={handleLogout}>Logout</button>
+        </p>
       ) : (
-        <>
-          <p><a href="/login">Accedi con email</a> per salvare le tue somme</p>
-        </>
+        <p>
+          <a href="/login">Accedi con email</a> per salvare le tue somme
+        </p>
       )}
 
       <div style={{ marginTop: '1rem' }}>
@@ -84,7 +85,9 @@ export default function Home() {
       </div>
 
       {result !== null && (
-        <p style={{ marginTop: '1rem' }}>Risultato: <strong>{result}</strong></p>
+        <p style={{ marginTop: '1rem' }}>
+          Risultato: <strong>{result}</strong>
+        </p>
       )}
 
       {user && history.length > 0 && (
