@@ -53,7 +53,7 @@ export default function Home() {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Somma di due numeri</h1>
+      <h1>Somma di due numeri - v1</h1>
 
       {user ? (
         <p>
