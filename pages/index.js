@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+
+useEffect(() => {
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    console.log('Utente loggato:', user);
+    setUser(user);
+  });
+}, []);
+
 export default function Home() {
   const [num1, setNum1] = useState('');
   const [num2, setNum2] = useState('');
