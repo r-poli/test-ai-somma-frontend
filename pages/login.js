@@ -7,8 +7,11 @@ export default function Login() {
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) setMessage(error.message);
-    else setMessage('Controlla la tua email per il magic link!');
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setMessage('Controlla la tua email per il magic link!');
+    }
   };
 
   return (
@@ -19,6 +22,7 @@ export default function Login() {
         placeholder="La tua email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        style={{ marginRight: '1rem' }}
       />
       <button onClick={handleLogin}>Invia Magic Link</button>
       <p>{message}</p>
